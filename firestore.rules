@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Links collection: Publicly readable by all users, writable by anyone with app access / admin
+    match /links/{linkId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Config collection: Publicly readable, admin configurable
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Users collection: Publicly readable for dashboard stats, users can log visits
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Daily activity collection
+    match /daily_activity/{dateId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

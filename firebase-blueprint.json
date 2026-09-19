@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "VideoLink": {
+      "title": "VideoLink",
+      "description": "A curated video link in the New Links section",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "url": { "type": "string" },
+        "date": { "type": "string" },
+        "category": { "type": "string" },
+        "isNew": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title", "url"]
+    },
+    "AppConfig": {
+      "title": "AppConfig",
+      "description": "Global application configuration and main button URLs",
+      "type": "object",
+      "properties": {
+        "freeVideosUrl": { "type": "string" },
+        "vipStoreUrl": { "type": "string" },
+        "storageUrl": { "type": "string" },
+        "botUrl": { "type": "string" },
+        "telegramSupportAccount": { "type": "string" },
+        "tiktokUrl": { "type": "string" },
+        "instagramUrl": { "type": "string" },
+        "whatsappUrl": { "type": "string" }
+      }
+    },
+    "RegisteredUser": {
+      "title": "RegisteredUser",
+      "description": "Telegram user who accessed the mini app",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "firstName": { "type": "string" },
+        "registeredAt": { "type": "string" },
+        "lastActiveAt": { "type": "string" },
+        "loginCount": { "type": "number" }
+      },
+      "required": ["id", "username"]
+    },
+    "DailyActivity": {
+      "title": "DailyActivity",
+      "description": "Aggregated daily active user stats",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "activeCount": { "type": "number" },
+        "activeUsernames": { "type": "array" }
+      },
+      "required": ["date", "activeCount"]
+    }
+  },
+  "firestore": {
+    "/links/{linkId}": {
+      "$ref": "VideoLink"
+    },
+    "/config/{configId}": {
+      "$ref": "AppConfig"
+    },
+    "/users/{userId}": {
+      "$ref": "RegisteredUser"
+    },
+    "/daily_activity/{dateId}": {
+      "$ref": "DailyActivity"
+    }
+  }
+}

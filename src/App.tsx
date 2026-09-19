@@ -35,7 +35,9 @@ import {
   saveServerConfig,
   logUserToServer,
   fetchServerUsers,
+  subscribeToLiveLinks,
 } from './utils/api';
+import { testFirestoreConnection } from './firebase';
 import studioBg from './assets/images/eterbox_vip_bg_1789755242238.jpg';
 
 const STORAGE_KEY_LINKS = 'etebox_vip_video_links_v2';
@@ -199,22 +201,39 @@ export default function App() {
   useEffect(() => {
     initTelegramApp();
     const tgUser = getTelegramWebAppUser();
-    if (tgUser?.username && !currentUser) {
-      // Auto register or hint
+    if (tgUser?.username) {
+      const cleanUsername = tgUser.username.startsWith('@') ? tgUser.username : `@${tgUser.username}`;
       const newUser: TelegramUser = {
-        username: tgUser.username,
+        username: cleanUsername,
         firstName: tgUser.firstName,
         id: tgUser.id,
         isAuthed: true,
       };
       setCurrentUser(newUser);
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(newUser));
+      logUserToServer(cleanUsername, tgUser.firstName);
+    } else if (currentUser?.username) {
+      logUserToServer(currentUser.username, currentUser.firstName);
+    } else {
+      // Record guest / anonymous visitor session
+      const anonymousId = `guest_${Math.random().toString(36).substring(2, 8)}`;
+      logUserToServer(`@Visitor_${anonymousId.slice(-4)}`, 'Guest Visitor');
     }
 
-    // Synchronize links and config from server database
+    // Test Firestore connection on boot
+    testFirestoreConnection();
+
+    // Synchronize links and config from persistent Firestore database
     fetchServerLinks().then((serverLinks) => {
       if (serverLinks && Array.isArray(serverLinks) && serverLinks.length > 0) {
         setLinks(serverLinks);
+      }
+    });
+
+    // Real-time Firestore subscription: updates all devices instantly
+    const unsubscribeLinks = subscribeToLiveLinks((liveLinks) => {
+      if (liveLinks && Array.isArray(liveLinks)) {
+        setLinks(liveLinks);
       }
     });
 
@@ -232,6 +251,10 @@ export default function App() {
         setDailyActivity(serverData.dailyActivity);
       }
     });
+
+    return () => {
+      unsubscribeLinks?.();
+    };
   }, []);
 
   // Update HTML dir and lang on language change
@@ -554,6 +577,16 @@ export default function App() {
   };
 
   const handleOpenAdminDashboard = () => {
+    // Refresh latest cloud users and stats before opening
+    fetchServerUsers().then((serverData) => {
+      if (serverData?.registeredUsers && serverData.registeredUsers.length > 0) {
+        setRegisteredUsers(serverData.registeredUsers);
+      }
+      if (serverData?.dailyActivity && serverData.dailyActivity.length > 0) {
+        setDailyActivity(serverData.dailyActivity);
+      }
+    });
+
     if (!isAdminAuthenticated) {
       setShowAdminLoginModal(true);
     } else {
